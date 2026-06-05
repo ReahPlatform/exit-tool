@@ -19,24 +19,45 @@ is sent to Reah.
 4. **Private key** — the encrypted export bundle is decrypted **locally** with an
    ephemeral key. The plaintext private key never leaves your browser.
 
-## Running it
+## Use it
 
-The safest way is to **run a local copy** so you never have to trust a hosted instance
-with your keys.
+The exit tool ships as a **single, self-contained HTML file** with all JS and CSS inlined.
+You don't need to install anything or build it yourself.
+
+1. Go to the [**latest release**](https://github.com/ReahPlatform/exit-tool/releases/latest).
+2. Download the **`exit-tool.html`** asset, or grab it directly:
+
+   ```sh
+   curl -L -o exit-tool.html \
+     https://github.com/ReahPlatform/exit-tool/releases/latest/download/exit-tool.html
+   ```
+
+3. Open `exit-tool.html` in your browser (double-click it, or `File → Open`).
+
+That's it. The page runs entirely from that one file — you can disconnect from the
+network first if you like; the only requests it ever makes are to `api.turnkey.com` while
+you export. Nothing is sent to Reah.
+
+> Prefer to trust your own copy? Verify the file's checksum against the release, or
+> build it from source (below) and compare — the build is deterministic.
+
+## Build from source (optional)
+
+If you'd rather build the single-file copy yourself instead of downloading the release:
 
 ```sh
 npm install
-npm run dev       # http://localhost:5173
+npm run build     # produces dist/index.html — the same single self-contained file
 ```
 
-### Build an offline, single-file copy
+`dist/index.html` is byte-for-byte the artifact attached to each release. Open it the same
+way as above.
+
+To run it as a live dev server while hacking on the code:
 
 ```sh
-npm run build     # produces dist/index.html — a single self-contained file
+npm run dev       # http://localhost:5173
 ```
-
-`dist/index.html` has all JS and CSS inlined. Download it, disconnect from the network
-if you like, and open it — it works fully offline except for the calls to Turnkey.
 
 ## Security
 
