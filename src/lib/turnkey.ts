@@ -36,6 +36,31 @@ export async function validateKit(kit: RecoveryKit): Promise<WhoAmI> {
   }
 }
 
+export type KitQuorum = {
+  /** Votes the root quorum requires to approve an export. */
+  threshold: number
+  /** Votes this single kit can produce on its own. */
+  kitVotes: number
+  /** True when this one kit alone meets the threshold (a sole owner). */
+  soleSufficient: boolean
+}
+
+/**
+ * Reads the entity's root-quorum threshold and works out whether THIS kit can meet it
+ * alone. A kit always supplies the owner's vote; a single-owner break-glass kit also
+ * bundles the recovery-user key, which is a second root-quorum member — so two votes,
+ * enough for the threshold-2 quorum a sole owner has. A multi-owner kit carries only the
+ * owner key (one vote), so more owners' kits are needed.
+ */
+export async function checkKitQuorum(kit: RecoveryKit): Promise<KitQuorum> {
+  const client = clientForKit(kit)
+  const cfg = await client.getOrganizationConfigs({ organizationId: kit.turnkey_suborg_id })
+  const threshold = cfg.configs.quorum?.threshold ?? 1
+  const hasRecoveryUser = Boolean(kit.recovery_user_public_key && kit.recovery_user_private_key)
+  const kitVotes = 1 + (hasRecoveryUser ? 1 : 0)
+  return { threshold, kitVotes, soleSufficient: kitVotes >= threshold }
+}
+
 export type WalletAccount = {
   walletId: string
   walletName: string
