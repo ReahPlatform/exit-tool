@@ -53,26 +53,26 @@ export type KitCoverage = {
   soleSufficient: boolean
 }
 
-/**
- * Resolves, against live Turnkey state, which root-quorum members this kit can vote as.
- *
- * It reads the quorum (threshold + member user IDs), then maps every credential public
- * key in the sub-org's users back to its owner. The kit's own keys (owner key, and the
- * recovery-user key when present) are looked up in that map: a key counts only if it is a
- * current credential of a quorum member. This is the real test of whether a kit "works":
- * a stale recovery key that Turnkey no longer recognises simply won't appear, so the kit
- * falls short of the threshold and a second kit is required.
- */
-export async function checkKitCoverage(kit: RecoveryKit): Promise<KitCoverage> {
-  const client = clientForKit(kit)
-  const organizationId = kit.turnkey_suborg_id
+type QuorumMap = {
+  threshold: number
+  quorumUserIds: string[]
+  /** Quorum member user IDs (a Set view of quorumUserIds). */
+  quorum: Set<string>
+  /** Lower-cased credential public key → the user that currently owns it. */
+  pubKeyToUser: Map<string, string>
+}
 
+/**
+ * Reads the sub-org's root quorum (threshold + members) and a map from every live
+ * credential public key to its owning user. This is the single source of truth for "which
+ * keys can actually vote": a key only counts if it appears here as a current credential of
+ * a quorum member.
+ */
+async function loadQuorumMap(client: TurnkeyClient, organizationId: string): Promise<QuorumMap> {
   const cfg = await client.getOrganizationConfigs({ organizationId })
   const threshold = cfg.configs.quorum?.threshold ?? 1
   const quorumUserIds = cfg.configs.quorum?.userIds ?? []
-  const quorum = new Set(quorumUserIds)
 
-  // Map every live credential public key in the sub-org to the user that owns it.
   const usersResp = await client.getUsers({ organizationId })
   const pubKeyToUser = new Map<string, string>()
   for (const user of usersResp.users) {
@@ -82,7 +82,21 @@ export async function checkKitCoverage(kit: RecoveryKit): Promise<KitCoverage> {
     }
   }
 
-  // The kit's keys only count as votes if they map to a current quorum-member credential.
+  return { threshold, quorumUserIds, quorum: new Set(quorumUserIds), pubKeyToUser }
+}
+
+/**
+ * Resolves, against live Turnkey state, which root-quorum members this kit can vote as.
+ *
+ * A kit always carries the owner key; a single-owner break-glass kit also carries the
+ * recovery-user key. Each key counts only if it is a current credential of a quorum
+ * member — a stale recovery key that Turnkey no longer recognises contributes nothing, so
+ * the kit falls short of the threshold and a second kit is required.
+ */
+export async function checkKitCoverage(kit: RecoveryKit): Promise<KitCoverage> {
+  const organizationId = kit.turnkey_suborg_id
+  const { threshold, quorumUserIds, quorum, pubKeyToUser } = await loadQuorumMap(clientForKit(kit), organizationId)
+
   const covered = new Set<string>()
   const kitKeys = [kit.public_key, kit.recovery_user_public_key].filter(Boolean) as string[]
   for (const pub of kitKeys) {
@@ -92,6 +106,37 @@ export async function checkKitCoverage(kit: RecoveryKit): Promise<KitCoverage> {
 
   const coveredUserIds = [...covered]
   return { threshold, quorumUserIds, coveredUserIds, soleSufficient: coveredUserIds.length >= threshold }
+}
+
+type ApproverKey = { pub: string; priv: string; userId: string }
+
+/**
+ * From the entered kits, builds the ordered list of keys that can actually approve an
+ * export — one working key per distinct quorum member. Every candidate key (each kit's
+ * owner key, plus any bundled recovery-user key) is checked against live Turnkey state and
+ * dropped unless it is a current credential of a quorum member not already covered. This
+ * is what lets a sole owner use [owner key, recovery-user key] while a multi-owner export
+ * uses [owner-A key, owner-B key] — and never tries a stale key that would 404.
+ */
+async function resolveApproverKeys(kits: RecoveryKit[], organizationId: string): Promise<ApproverKey[]> {
+  const { quorum, pubKeyToUser } = await loadQuorumMap(clientForKit(kits[0]), organizationId)
+
+  const approvers: ApproverKey[] = []
+  const seenMembers = new Set<string>()
+  for (const kit of kits) {
+    const candidates: Array<{ pub: string; priv: string }> = [{ pub: kit.public_key, priv: kit.private_key }]
+    if (kit.recovery_user_public_key && kit.recovery_user_private_key) {
+      candidates.push({ pub: kit.recovery_user_public_key, priv: kit.recovery_user_private_key })
+    }
+    for (const c of candidates) {
+      const userId = pubKeyToUser.get(c.pub.toLowerCase())
+      if (userId && quorum.has(userId) && !seenMembers.has(userId)) {
+        seenMembers.add(userId)
+        approvers.push({ ...c, userId })
+      }
+    }
+  }
+  return approvers
 }
 
 export type WalletAccount = {
@@ -142,10 +187,10 @@ export function networkLabel(addressFormat: string): string {
 /**
  * Exports the live private key for a wallet account, decrypted locally.
  *
- * Export is a root-quorum activity. The first kit submits it; if Turnkey reports
- * CONSENSUS_NEEDED, the remaining kits approve until the threshold is met. A sole
- * owner provides one kit that carries BOTH the owner key and the recovery-user key,
- * which together meet a threshold-2 quorum — both are used to approve here.
+ * Export is a root-quorum activity. We first resolve which keys can actually vote (one
+ * working key per distinct quorum member — stale keys are dropped), then propose the
+ * export with the first and approve with the rest until the threshold is met. A sole owner
+ * resolves to [owner key, recovery-user key]; a multi-owner export to two owners' keys.
  */
 export async function exportWalletAccountPrivateKey(
   kits: RecoveryKit[],
@@ -153,12 +198,20 @@ export async function exportWalletAccountPrivateKey(
 ): Promise<string> {
   if (kits.length === 0) throw new Error('No recovery kits provided.')
 
+  const organizationId = kits[0].turnkey_suborg_id
+
+  // Only keys Turnkey still recognises as quorum-member credentials, one per member.
+  const approverKeys = await resolveApproverKeys(kits, organizationId)
+  if (approverKeys.length === 0) {
+    throw new Error('None of the recovery kits carry a key Turnkey recognises for this entity.')
+  }
+
   // Ephemeral target keypair: Turnkey encrypts the export bundle to this public key,
   // and we decrypt it locally with the matching private key.
   const target = generateP256KeyPair()
-  const organizationId = kits[0].turnkey_suborg_id
 
-  const submitter = clientForKit(kits[0])
+  // Propose with the first working key.
+  const submitter = clientForKey(approverKeys[0].pub, approverKeys[0].priv)
   let activity = (
     await submitter.exportWalletAccount({
       type: 'ACTIVITY_TYPE_EXPORT_WALLET_ACCOUNT',
@@ -171,17 +224,7 @@ export async function exportWalletAccountPrivateKey(
     })
   ).activity
 
-  // Build the full set of approver keys: every owner kit's key, plus the sole-owner
-  // recovery-user key when present.
-  const approverKeys: Array<{ pub: string; priv: string }> = []
-  for (const kit of kits) {
-    approverKeys.push({ pub: kit.public_key, priv: kit.private_key })
-    if (kit.recovery_user_public_key && kit.recovery_user_private_key) {
-      approverKeys.push({ pub: kit.recovery_user_public_key, priv: kit.recovery_user_private_key })
-    }
-  }
-
-  // Approve with the remaining keys until the activity completes.
+  // Approve with the remaining working keys until the activity completes.
   let approverIndex = 1
   while (activity.status === 'ACTIVITY_STATUS_CONSENSUS_NEEDED' && approverIndex < approverKeys.length) {
     const key = approverKeys[approverIndex]
