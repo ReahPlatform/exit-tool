@@ -1,0 +1,14 @@
+/* Design tokens + look ported verbatim from the preview-9 mock so the standalone
+   tool keeps the dashboard visual language. mock.css carries every scene's classes;
+   the exit tool only uses the .gh-* (and a few shared) rules. */
+@import './tokens.css';
+@import './mock.css';
+@import './exit.css';
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: var(--color-background-grey4, #f4f5f7);
+}
