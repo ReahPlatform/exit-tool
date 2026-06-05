@@ -310,10 +310,10 @@ function StepWallet({
                 <Icon.Wallet size={16} />
               </div>
               <div className="gh-owner-main">
-                <div className="n">{a.walletName}</div>
-                <div className="r" style={{ fontFamily: 'var(--font-mono)' }}>
-                  {networkLabel(a.addressFormat)} · {a.address}
+                <div className="n" style={{ fontFamily: 'var(--font-mono)' }}>
+                  {a.address}
                 </div>
+                <div className="r">{networkLabel(a.addressFormat)}</div>
               </div>
               <div className="gh-wallet-check">
                 {selected?.accountId === a.accountId ? <Icon.CheckCircle size={20} /> : <Icon.ChevRight size={16} />}
