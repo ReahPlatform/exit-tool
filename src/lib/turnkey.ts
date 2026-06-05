@@ -36,29 +36,62 @@ export async function validateKit(kit: RecoveryKit): Promise<WhoAmI> {
   }
 }
 
-export type KitQuorum = {
-  /** Votes the root quorum requires to approve an export. */
+export type KitCoverage = {
+  /** Distinct approvals the root quorum requires to approve an export. */
   threshold: number
-  /** Votes this single kit can produce on its own. */
-  kitVotes: number
-  /** True when this one kit alone meets the threshold (a sole owner). */
+  /** All quorum member user IDs. */
+  quorumUserIds: string[]
+  /**
+   * The quorum members THIS kit can actually vote as — i.e. members whose live
+   * credential matches a key carried by the kit. A kit always carries the owner key; a
+   * single-owner break-glass kit also carries the recovery-user key. A key only counts
+   * if Turnkey still recognises it as that member's credential (a rotated/stale recovery
+   * key contributes nothing).
+   */
+  coveredUserIds: string[]
+  /** True when this one kit alone covers enough distinct quorum members (a sole owner). */
   soleSufficient: boolean
 }
 
 /**
- * Reads the entity's root-quorum threshold and works out whether THIS kit can meet it
- * alone. A kit always supplies the owner's vote; a single-owner break-glass kit also
- * bundles the recovery-user key, which is a second root-quorum member — so two votes,
- * enough for the threshold-2 quorum a sole owner has. A multi-owner kit carries only the
- * owner key (one vote), so more owners' kits are needed.
+ * Resolves, against live Turnkey state, which root-quorum members this kit can vote as.
+ *
+ * It reads the quorum (threshold + member user IDs), then maps every credential public
+ * key in the sub-org's users back to its owner. The kit's own keys (owner key, and the
+ * recovery-user key when present) are looked up in that map: a key counts only if it is a
+ * current credential of a quorum member. This is the real test of whether a kit "works":
+ * a stale recovery key that Turnkey no longer recognises simply won't appear, so the kit
+ * falls short of the threshold and a second kit is required.
  */
-export async function checkKitQuorum(kit: RecoveryKit): Promise<KitQuorum> {
+export async function checkKitCoverage(kit: RecoveryKit): Promise<KitCoverage> {
   const client = clientForKit(kit)
-  const cfg = await client.getOrganizationConfigs({ organizationId: kit.turnkey_suborg_id })
+  const organizationId = kit.turnkey_suborg_id
+
+  const cfg = await client.getOrganizationConfigs({ organizationId })
   const threshold = cfg.configs.quorum?.threshold ?? 1
-  const hasRecoveryUser = Boolean(kit.recovery_user_public_key && kit.recovery_user_private_key)
-  const kitVotes = 1 + (hasRecoveryUser ? 1 : 0)
-  return { threshold, kitVotes, soleSufficient: kitVotes >= threshold }
+  const quorumUserIds = cfg.configs.quorum?.userIds ?? []
+  const quorum = new Set(quorumUserIds)
+
+  // Map every live credential public key in the sub-org to the user that owns it.
+  const usersResp = await client.getUsers({ organizationId })
+  const pubKeyToUser = new Map<string, string>()
+  for (const user of usersResp.users) {
+    for (const apiKey of user.apiKeys ?? []) {
+      const pub = apiKey.credential?.publicKey
+      if (pub) pubKeyToUser.set(pub.toLowerCase(), user.userId)
+    }
+  }
+
+  // The kit's keys only count as votes if they map to a current quorum-member credential.
+  const covered = new Set<string>()
+  const kitKeys = [kit.public_key, kit.recovery_user_public_key].filter(Boolean) as string[]
+  for (const pub of kitKeys) {
+    const userId = pubKeyToUser.get(pub.toLowerCase())
+    if (userId && quorum.has(userId)) covered.add(userId)
+  }
+
+  const coveredUserIds = [...covered]
+  return { threshold, quorumUserIds, coveredUserIds, soleSufficient: coveredUserIds.length >= threshold }
 }
 
 export type WalletAccount = {

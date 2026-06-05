@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Icon } from './icons'
 import { decodeRecoveryKit, kitFingerprint, type RecoveryKit } from './lib/kit'
 import {
-  checkKitQuorum,
+  checkKitCoverage,
   exportWalletAccountPrivateKey,
   listWalletAccounts,
   networkLabel,
@@ -130,21 +130,30 @@ function Sidebar({ idx, onGo }: { idx: number; onGo: (s: StepId) => void }) {
   )
 }
 
-// ── Step 1: paste up to two recovery kits, validated against Turnkey ──────────
+// ── Step 1: paste recovery kits, each verified against Turnkey's live quorum ──
 type KitSlot = {
   value: string
   status: 'empty' | 'checking' | 'valid' | 'invalid'
   whoami?: WhoAmI
   kit?: RecoveryKit
+  // Distinct quorum members this kit can actually vote as (live-verified).
+  covered?: string[]
   error?: string
 }
 const EMPTY_SLOT: KitSlot = { value: '', status: 'empty' }
 
+// Distinct quorum members covered across every verified kit = the export votes in hand.
+function countVotes(slots: KitSlot[]): number {
+  const members = new Set<string>()
+  for (const s of slots) if (s.status === 'valid' && s.covered) s.covered.forEach((u) => members.add(u))
+  return members.size
+}
+
 function StepKeys({ onChange, onNext }: { onChange: (k: RecoveryKit[]) => void; onNext: () => void }) {
   const [slots, setSlots] = useState<KitSlot[]>([{ ...EMPTY_SLOT }])
-  // How many valid kits this entity needs, and whether the first kit was sole-sufficient.
-  // Both are determined from the first kit's root-quorum once it verifies.
-  const [required, setRequired] = useState<number | null>(null)
+  // Distinct approvals the entity's root quorum requires, learned once the first kit
+  // verifies. Whether one kit is enough is decided by live coverage, not by the kit's shape.
+  const [threshold, setThreshold] = useState<number | null>(null)
   const [mode, setMode] = useState<'sole' | 'multi' | null>(null)
 
   // Surface the de-duplicated set of valid kits to the parent for the later steps.
@@ -163,68 +172,74 @@ function StepKeys({ onChange, onNext }: { onChange: (k: RecoveryKit[]) => void; 
     onChange(kits)
   }, [slots, onChange])
 
-  const patch = (index: number, p: Partial<KitSlot>, growTo = 0) =>
-    setSlots((s) => {
-      let next = s.map((sl, i) => (i === index ? { ...sl, ...p } : sl))
-      while (next.length < growTo) next = [...next, { ...EMPTY_SLOT }]
-      return next
+  // Keep exactly one trailing empty box open while the quorum is not yet met; trim spare
+  // empties once it is. Returning the same array reference when nothing changes avoids loops.
+  useEffect(() => {
+    if (threshold === null) return
+    const votes = countVotes(slots)
+    setSlots((prev) => {
+      if (votes < threshold) {
+        if (prev.some((s) => s.value.trim() === '')) return prev
+        return [...prev, { ...EMPTY_SLOT }]
+      }
+      let end = prev.length
+      while (end > 1 && prev[end - 1].value.trim() === '' && prev[end - 1].status !== 'valid') end -= 1
+      return end === prev.length ? prev : prev.slice(0, end)
     })
+  }, [slots, threshold])
+
+  const patch = (index: number, p: Partial<KitSlot>) =>
+    setSlots((s) => s.map((sl, i) => (i === index ? { ...sl, ...p } : sl)))
 
   const verify = async (index: number, raw: string) => {
     const value = raw.trim()
     if (!value) {
       if (index === 0) {
         // Clearing the first kit resets the whole determination.
-        setRequired(null)
+        setThreshold(null)
         setMode(null)
         setSlots([{ ...EMPTY_SLOT }])
         return
       }
-      patch(index, { value, status: 'empty', kit: undefined, whoami: undefined, error: undefined })
+      patch(index, { value, status: 'empty', kit: undefined, whoami: undefined, covered: undefined, error: undefined })
       return
     }
     patch(index, { value, status: 'checking' })
     try {
       const kit = decodeRecoveryKit(value)
       const whoami = await validateKit(kit)
+      // Ask Turnkey which quorum members this kit can really vote as — a stale recovery
+      // key contributes nothing, so a "sole owner" must be earned, not assumed.
+      const cov = await checkKitCoverage(kit)
       if (index === 0) {
-        let req = 2
-        let m: 'sole' | 'multi' = 'multi'
-        try {
-          const q = await checkKitQuorum(kit)
-          req = q.soleSufficient ? 1 : q.threshold
-          m = q.soleSufficient ? 'sole' : 'multi'
-        } catch {
-          // Fall back to the kit's own signal: a bundled recovery-user key means a
-          // single-owner break-glass kit that can recover on its own.
-          const sole = Boolean(kit.recovery_user_public_key && kit.recovery_user_private_key)
-          req = sole ? 1 : 2
-          m = sole ? 'sole' : 'multi'
-        }
-        setRequired(req)
-        setMode(m)
-        patch(index, { value, status: 'valid', whoami, kit, error: undefined }, req)
-      } else {
-        patch(index, { value, status: 'valid', whoami, kit, error: undefined })
+        setThreshold(cov.threshold)
+        setMode(cov.soleSufficient ? 'sole' : 'multi')
       }
+      patch(index, { value, status: 'valid', whoami, kit, covered: cov.coveredUserIds, error: undefined })
     } catch (err) {
-      patch(index, { value, status: 'invalid', kit: undefined, whoami: undefined, error: errMsg(err) })
+      patch(index, {
+        value,
+        status: 'invalid',
+        kit: undefined,
+        whoami: undefined,
+        covered: undefined,
+        error: errMsg(err),
+      })
     }
   }
 
-  const distinct = new Set(
-    slots.filter((s) => s.status === 'valid' && s.kit).map((s) => kitFingerprint(s.kit as RecoveryKit)),
-  ).size
-  const canProceed = required !== null && distinct >= required
-  const remaining = required !== null ? Math.max(0, required - distinct) : 0
+  const votes = countVotes(slots)
+  const canProceed = threshold !== null && votes >= threshold
+  const remaining = threshold !== null ? Math.max(0, threshold - votes) : 0
 
   return (
     <div className="gh-card">
       <div className="head">
         <h1>Enter Owner Recovery Kits</h1>
         <p>
-          Paste a Recovery Kit string. The tool verifies it with Turnkey and checks the entity's signing quorum — a{' '}
-          <b>sole owner needs only one kit</b>; a multi-owner entity needs one per required owner.
+          Paste a Recovery Kit string. The tool verifies it against Turnkey's live signing quorum — a{' '}
+          <b>sole owner whose kit meets the quorum needs only one</b>; otherwise add more owner kits until the quorum
+          is met.
         </p>
       </div>
       <div className="body">
@@ -232,7 +247,7 @@ function StepKeys({ onChange, onNext }: { onChange: (k: RecoveryKit[]) => void; 
           <div key={i} className="exit-kit-field">
             <div className="exit-kit-label">
               Recovery Kit {i + 1}
-              {i > 0 && <span className="exit-kit-optional"> · required for this entity</span>}
+              {i > 0 && <span className="exit-kit-optional"> · additional owner kit</span>}
             </div>
             <textarea
               className={`exit-kit-input ${slot.status === 'invalid' ? 'is-invalid' : ''} ${
@@ -247,29 +262,33 @@ function StepKeys({ onChange, onNext }: { onChange: (k: RecoveryKit[]) => void; 
             {slot.status === 'checking' && <div className="exit-kit-note">Verifying with Turnkey…</div>}
             {slot.status === 'valid' && i === 0 && mode === 'sole' && (
               <div className="exit-kit-note ok">
-                <Icon.CheckCircle size={12} /> Verified · sole owner — this kit can recover on its own
+                <Icon.CheckCircle size={12} /> Verified · sole owner — this kit meets the quorum on its own
               </div>
             )}
             {slot.status === 'valid' && !(i === 0 && mode === 'sole') && (
               <div className="exit-kit-note ok">
-                <Icon.CheckCircle size={12} /> Verified
-                {slot.whoami ? ` · ${slot.whoami.organizationName || slot.whoami.organizationId}` : ''}
+                <Icon.CheckCircle size={12} /> Verified · counts as {slot.covered?.length ?? 1} approval
+                {(slot.covered?.length ?? 1) === 1 ? '' : 's'}
               </div>
             )}
             {slot.status === 'invalid' && <div className="exit-kit-note err">{slot.error}</div>}
           </div>
         ))}
 
-        {mode === 'multi' && required !== null && (
+        {mode === 'multi' && threshold !== null && (
           <div className={`gh-callout ${remaining === 0 ? 'ok' : 'warn'}`} style={{ marginTop: 6 }}>
             <span className="ic">
               {remaining === 0 ? <Icon.CheckCircle size={16} /> : <Icon.AlertTri size={16} />}
             </span>
             <div>
-              <strong>Multi-owner entity — {required} owner kits required</strong>
+              <strong>
+                {remaining === 0 ? 'Signing quorum met' : 'More owner kits required'} — {votes} of {threshold} approvals
+              </strong>
               {remaining === 0
-                ? 'All required kits verified. You can continue.'
-                : `Add ${remaining} more owner Recovery Kit${remaining > 1 ? 's' : ''} to meet the signing quorum.`}
+                ? 'These kits meet the entity’s signing quorum. You can continue.'
+                : `This entity needs ${threshold} approvals to export. Add ${remaining} more owner Recovery Kit${
+                    remaining > 1 ? 's' : ''
+                  } from other owners.`}
             </div>
           </div>
         )}
