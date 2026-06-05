@@ -64,3 +64,18 @@
 .exit-kit-note.err {
   color: var(--color-error, #ed4a4a);
 }
+
+/* Colored buttons keep their own color (slightly shifted) on hover instead of falling
+   through to the generic grey .gh-btn:hover. */
+.gh-btn-danger:hover {
+  background: #d83c3c;
+  border-color: #d83c3c;
+}
+.gh-btn-amber:hover {
+  background: #ffcf7a;
+  border-color: #ffcf7a;
+}
+.gh-btn-ghost:hover {
+  background: var(--color-background-grey3);
+  color: var(--color-info-n10);
+}

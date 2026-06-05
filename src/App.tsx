@@ -108,12 +108,11 @@ function Sidebar({ idx, onGo }: { idx: number; onGo: (s: StepId) => void }) {
           </div>
           <div>
             <div className="gh-session-title">Recovery session</div>
-            <div className="gh-session-sub">Direct to Turnkey · no Reah connection</div>
+            <div className="gh-session-sub">Offline · no Reah connection</div>
           </div>
         </div>
         <div className="gh-session-copy">
-          Open-source and offline-first. Every operation happens in your browser and goes straight to Turnkey; nothing
-          is sent to Reah.
+          Open-source and offline-first. Every operation happens in your browser; nothing is uploaded to Reah.
         </div>
       </div>
       <div className="step-group">Recover</div>
@@ -434,7 +433,8 @@ function StepReveal({
       <div className="head">
         <h1 className="gh-danger-title">Private key revealed</h1>
         <p>
-          This is the live private key for <b>{account.walletName}</b>. Treat it like cash.
+          This is the live private key for the <b>{networkLabel(account.addressFormat)}</b> account{' '}
+          <span style={{ fontFamily: 'var(--font-mono)' }}>{account.address}</span>. Treat it like cash.
         </p>
       </div>
       <div className="body">
@@ -451,7 +451,7 @@ function StepReveal({
 
         <div className="gh-key-meta">
           <span>
-            {account.walletName} · {networkLabel(account.addressFormat)} · {account.address}
+            {networkLabel(account.addressFormat)} · {account.address}
           </span>
           <span style={{ flex: 1 }} />
           <button className="gh-btn" onClick={() => setRevealed((r) => !r)}>
@@ -536,7 +536,6 @@ function StepLine({ n, children }: { n: number; children: React.ReactNode }) {
 
 function downloadKey(account: WalletAccount, privateKey: string) {
   const payload = {
-    walletName: account.walletName,
     address: account.address,
     network: networkLabel(account.addressFormat),
     addressFormat: account.addressFormat,

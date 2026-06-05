@@ -73,7 +73,7 @@ export async function listWalletAccounts(kit: RecoveryKit): Promise<WalletAccoun
 
 /** Maps a Turnkey address format to a friendly network label for display. */
 export function networkLabel(addressFormat: string): string {
-  if (addressFormat.includes('ETHEREUM')) return 'Ethereum'
+  if (addressFormat.includes('ETHEREUM')) return 'EVM'
   if (addressFormat.includes('SOLANA')) return 'Solana'
   if (addressFormat.includes('COSMOS')) return 'Cosmos'
   if (addressFormat.includes('TRON')) return 'Tron'
