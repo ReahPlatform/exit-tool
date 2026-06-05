@@ -141,6 +141,9 @@ type KitSlot = {
   error?: string
 }
 const EMPTY_SLOT: KitSlot = { value: '', status: 'empty' }
+// A recovery needs at most two kits: a sole owner's single kit (owner + recovery-user
+// votes), or two owners' kits for a two-of-N quorum.
+const MAX_KITS = 2
 
 // Distinct quorum members covered across every verified kit = the export votes in hand.
 function countVotes(slots: KitSlot[]): number {
@@ -172,14 +175,15 @@ function StepKeys({ onChange, onNext }: { onChange: (k: RecoveryKit[]) => void; 
     onChange(kits)
   }, [slots, onChange])
 
-  // Keep exactly one trailing empty box open while the quorum is not yet met; trim spare
-  // empties once it is. Returning the same array reference when nothing changes avoids loops.
+  // Open a second box (and never more than two) while the quorum is not yet met; trim a
+  // spare empty box once it is. Returning the same array reference when nothing changes
+  // avoids re-render loops.
   useEffect(() => {
     if (threshold === null) return
     const votes = countVotes(slots)
     setSlots((prev) => {
       if (votes < threshold) {
-        if (prev.some((s) => s.value.trim() === '')) return prev
+        if (prev.length >= MAX_KITS || prev.some((s) => s.value.trim() === '')) return prev
         return [...prev, { ...EMPTY_SLOT }]
       }
       let end = prev.length
@@ -238,8 +242,8 @@ function StepKeys({ onChange, onNext }: { onChange: (k: RecoveryKit[]) => void; 
         <h1>Enter Owner Recovery Kits</h1>
         <p>
           Paste a Recovery Kit string. The tool verifies it against Turnkey's live signing quorum — a{' '}
-          <b>sole owner whose kit meets the quorum needs only one</b>; otherwise add more owner kits until the quorum
-          is met.
+          <b>sole owner whose kit meets the quorum needs only one</b>; otherwise add a second owner kit to meet the
+          quorum (at most two).
         </p>
       </div>
       <div className="body">
@@ -286,9 +290,11 @@ function StepKeys({ onChange, onNext }: { onChange: (k: RecoveryKit[]) => void; 
               </strong>
               {remaining === 0
                 ? 'These kits meet the entity’s signing quorum. You can continue.'
-                : `This entity needs ${threshold} approvals to export. Add ${remaining} more owner Recovery Kit${
-                    remaining > 1 ? 's' : ''
-                  } from other owners.`}
+                : slots.length >= MAX_KITS
+                  ? `Two recovery kits still fall short of this entity’s signing quorum (${threshold} approvals needed). Use kits from the required owners.`
+                  : `This entity needs ${threshold} approvals to export. Add ${remaining} more owner Recovery Kit${
+                      remaining > 1 ? 's' : ''
+                    } from another owner.`}
             </div>
           </div>
         )}

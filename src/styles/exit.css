@@ -65,6 +65,22 @@
   color: var(--color-error, #ed4a4a);
 }
 
+/* A disabled button must clearly read as non-interactive: fade it, show a not-allowed
+   cursor, and suppress the colored hover shift so it never looks clickable. */
+.gh-btn:disabled,
+.gh-btn:disabled:hover {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.gh-btn-amber:disabled:hover {
+  background: var(--color-theme-yellow);
+  border-color: var(--color-theme-yellow);
+}
+.gh-btn-danger:disabled:hover {
+  background: #da3633;
+  border-color: #da3633;
+}
+
 /* Colored buttons keep their own color (slightly shifted) on hover instead of falling
    through to the generic grey .gh-btn:hover. */
 .gh-btn-danger:hover {
