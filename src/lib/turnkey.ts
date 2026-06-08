@@ -5,8 +5,13 @@ import { decryptExportBundle, generateP256KeyPair } from '@turnkey/crypto'
 import { TurnkeyClient } from '@turnkey/http'
 
 import type { RecoveryKit } from './kit'
+import { IS_MOCK, mockDelay, mockId } from './mock'
 
 const TURNKEY_BASE_URL = 'https://api.turnkey.com'
+
+// In mock mode the recovery needs two distinct owner approvals (so the full multi-kit
+// flow — intermediate "more kits required" then success — is exercised).
+const MOCK_THRESHOLD = 2
 
 function clientForKey(publicKeyHex: string, privateKeyHex: string): TurnkeyClient {
   const stamper = new ApiKeyStamper({ apiPublicKey: publicKeyHex, apiPrivateKey: privateKeyHex })
@@ -26,6 +31,15 @@ export type WhoAmI = {
 
 /** Validates that the kit's key is accepted by Turnkey for its sub-org. */
 export async function validateKit(kit: RecoveryKit): Promise<WhoAmI> {
+  if (IS_MOCK) {
+    await mockDelay()
+    return {
+      organizationId: kit.turnkey_suborg_id,
+      organizationName: 'Mock Entity',
+      userId: kit.user_id,
+      username: `owner-${mockId(kit.public_key).slice(0, 4)}`,
+    }
+  }
   const client = clientForKit(kit)
   const resp = await client.getWhoami({ organizationId: kit.turnkey_suborg_id })
   return {
@@ -94,6 +108,16 @@ async function loadQuorumMap(client: TurnkeyClient, organizationId: string): Pro
  * the kit falls short of the threshold and a second kit is required.
  */
 export async function checkKitCoverage(kit: RecoveryKit): Promise<KitCoverage> {
+  if (IS_MOCK) {
+    await mockDelay()
+    // Each kit covers exactly one distinct member; two are needed to meet the quorum.
+    return {
+      threshold: MOCK_THRESHOLD,
+      quorumUserIds: ['mock-quorum-a', 'mock-quorum-b'],
+      coveredUserIds: [kit.user_id],
+      soleSufficient: false,
+    }
+  }
   const organizationId = kit.turnkey_suborg_id
   const { threshold, quorumUserIds, quorum, pubKeyToUser } = await loadQuorumMap(clientForKit(kit), organizationId)
 
@@ -150,6 +174,27 @@ export type WalletAccount = {
 
 /** Lists every wallet account (address + network) in the sub-org. */
 export async function listWalletAccounts(kit: RecoveryKit): Promise<WalletAccount[]> {
+  if (IS_MOCK) {
+    await mockDelay()
+    return [
+      {
+        walletId: 'mock-wallet-1',
+        walletName: 'Main Wallet',
+        accountId: 'mock-acct-evm',
+        address: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+        addressFormat: 'ADDRESS_FORMAT_ETHEREUM',
+        curve: 'CURVE_SECP256K1',
+      },
+      {
+        walletId: 'mock-wallet-1',
+        walletName: 'Main Wallet',
+        accountId: 'mock-acct-sol',
+        address: '7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2',
+        addressFormat: 'ADDRESS_FORMAT_SOLANA',
+        curve: 'CURVE_ED25519',
+      },
+    ]
+  }
   const client = clientForKit(kit)
   const organizationId = kit.turnkey_suborg_id
   const walletsResp = await client.getWallets({ organizationId })
@@ -197,6 +242,15 @@ export async function exportWalletAccountPrivateKey(
   walletAccount: WalletAccount,
 ): Promise<string> {
   if (kits.length === 0) throw new Error('No recovery kits provided.')
+
+  if (IS_MOCK) {
+    await mockDelay(900)
+    // A deterministic fake key — Solana accounts get a base58-ish string, others hex.
+    if (walletAccount.addressFormat.includes('SOLANA')) {
+      return '4d5d6e2f8a3b1c9047e6f2a1b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9'
+    }
+    return '0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318'
+  }
 
   const organizationId = kits[0].turnkey_suborg_id
 

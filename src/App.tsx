@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 
+import brand from './assets/brand.png'
 import { Icon } from './icons'
 import { decodeRecoveryKit, kitFingerprint, type RecoveryKit } from './lib/kit'
 import {
@@ -66,9 +67,8 @@ export function App() {
 function Topbar() {
   return (
     <div className="gh-topbar">
-      <div className="logo-dot">
-        <Icon.Shield size={14} />
-      </div>
+      <img className="brand-logo" src={brand} alt="Reah" width={66} height={18} />
+      <span className="brand-divider" />
       <div className="title">Reah Exit Tool</div>
       <div className="repo">
         <Icon.Github size={12} /> github.com/ReahPlatform/exit-tool
@@ -79,7 +79,7 @@ function Topbar() {
       </div>
       <div className="topright">
         <a
-          className="gh-btn gh-btn-ghost"
+          className="gh-btn"
           href="https://github.com/ReahPlatform/exit-tool#readme"
           target="_blank"
           rel="noreferrer"
@@ -87,7 +87,7 @@ function Topbar() {
           <Icon.HelpCircle size={14} /> Docs
         </a>
         <a
-          className="gh-btn gh-btn-ghost"
+          className="gh-btn"
           href="https://github.com/ReahPlatform/exit-tool"
           target="_blank"
           rel="noreferrer"
@@ -105,7 +105,7 @@ function Sidebar({ idx, onGo }: { idx: number; onGo: (s: StepId) => void }) {
       <div className="gh-session-card">
         <div className="gh-session-head">
           <div className="gh-session-icon">
-            <Icon.Shield size={16} />
+            <Icon.ShieldCheck size={16} />
           </div>
           <div>
             <div className="gh-session-title">Recovery session</div>
@@ -117,15 +117,31 @@ function Sidebar({ idx, onGo }: { idx: number; onGo: (s: StepId) => void }) {
         </div>
       </div>
       <div className="step-group">Recover</div>
-      {STEPS.map((s, i) => {
-        const cls = i < idx ? 'is-done' : i === idx ? 'is-current' : 'is-locked'
-        return (
-          <div key={s.id} className={`gh-step ${cls}`} onClick={() => i <= idx && onGo(s.id)}>
-            <span className="num">{i < idx ? <Icon.CheckCircle size={12} /> : i + 1}</span>
-            {s.label}
-          </div>
-        )
-      })}
+      <nav className="rk-stepper" aria-label="Progress">
+        {STEPS.map((s, i) => {
+          const status = i < idx ? 'done' : i === idx ? 'current' : 'todo'
+          const isLast = i === STEPS.length - 1
+          const clickable = i <= idx
+          return (
+            <div key={s.id} className="rk-step">
+              {!isLast && <span className="rk-step-line" />}
+              {clickable ? (
+                <button type="button" className="rk-step-row is-clickable" onClick={() => onGo(s.id)}>
+                  <span className={`rk-badge is-${status}`}>
+                    {status === 'done' ? <Icon.Check size={14} /> : i + 1}
+                  </span>
+                  <span className={`rk-step-label is-${status}`}>{s.label}</span>
+                </button>
+              ) : (
+                <div className="rk-step-row">
+                  <span className={`rk-badge is-${status}`}>{i + 1}</span>
+                  <span className={`rk-step-label is-${status}`}>{s.label}</span>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </nav>
     </aside>
   )
 }
@@ -266,12 +282,12 @@ function StepKeys({ onChange, onNext }: { onChange: (k: RecoveryKit[]) => void; 
             {slot.status === 'checking' && <div className="exit-kit-note">Verifying with Turnkey…</div>}
             {slot.status === 'valid' && i === 0 && mode === 'sole' && (
               <div className="exit-kit-note ok">
-                <Icon.CheckCircle size={12} /> Verified · sole owner — this kit meets the quorum on its own
+                Verified · sole owner — this kit meets the quorum on its own
               </div>
             )}
             {slot.status === 'valid' && !(i === 0 && mode === 'sole') && (
               <div className="exit-kit-note ok">
-                <Icon.CheckCircle size={12} /> Verified · counts as {slot.covered?.length ?? 1} approval
+                Verified · counts as {slot.covered?.length ?? 1} approval
                 {(slot.covered?.length ?? 1) === 1 ? '' : 's'}
               </div>
             )}
@@ -282,7 +298,7 @@ function StepKeys({ onChange, onNext }: { onChange: (k: RecoveryKit[]) => void; 
         {mode === 'multi' && threshold !== null && (
           <div className={`gh-callout ${remaining === 0 ? 'ok' : 'warn'}`} style={{ marginTop: 6 }}>
             <span className="ic">
-              {remaining === 0 ? <Icon.CheckCircle size={16} /> : <Icon.AlertTri size={16} />}
+              {remaining === 0 ? <Icon.CheckF size={20} /> : <Icon.AlertF size={20} />}
             </span>
             <div>
               <strong>
@@ -301,7 +317,7 @@ function StepKeys({ onChange, onNext }: { onChange: (k: RecoveryKit[]) => void; 
         {mode === 'sole' && canProceed && (
           <div className="gh-callout ok" style={{ marginTop: 6 }}>
             <span className="ic">
-              <Icon.CheckCircle size={16} />
+              <Icon.CheckF size={20} />
             </span>
             <div>
               <strong>Sole owner verified</strong>
@@ -313,7 +329,7 @@ function StepKeys({ onChange, onNext }: { onChange: (k: RecoveryKit[]) => void; 
       <div className="foot">
         <span style={{ flex: 1 }} />
         <button className="gh-btn gh-btn-amber" disabled={!canProceed} onClick={onNext}>
-          Continue <Icon.ArrowRight size={14} />
+          Continue
         </button>
       </div>
     </div>
@@ -371,7 +387,7 @@ function StepWallet({
               onClick={() => onSelect(a)}
             >
               <div className="gh-wallet-icon">
-                <Icon.Wallet size={16} />
+                <Icon.WalletL size={18} />
               </div>
               <div className="gh-owner-main">
                 <div className="n" style={{ fontFamily: 'var(--font-mono)' }}>
@@ -380,15 +396,15 @@ function StepWallet({
                 <div className="r">{networkLabel(a.addressFormat)}</div>
               </div>
               <div className="gh-wallet-check">
-                {selected?.accountId === a.accountId ? <Icon.CheckCircle size={20} /> : <Icon.ChevRight size={16} />}
+                <Icon.CheckF size={20} />
               </div>
             </button>
           ))}
         </div>
 
-        <div className="gh-callout warn" style={{ marginTop: 18 }}>
+        <div className="gh-callout warn" style={{ marginTop: 10 }}>
           <span className="ic">
-            <Icon.AlertTri size={16} />
+            <Icon.AlertF size={20} />
           </span>
           <div>
             <strong>You'll see the wallet's private key next</strong>
@@ -398,11 +414,11 @@ function StepWallet({
         </div>
       </div>
       <div className="foot">
-        <button className="gh-btn gh-btn-ghost" onClick={onBack}>
+        <span style={{ flex: 1 }} />
+        <button className="gh-btn" onClick={onBack}>
           ← Back
         </button>
-        <span style={{ flex: 1 }} />
-        <button className="gh-btn gh-btn-danger" disabled={!selected} onClick={onNext}>
+        <button className="gh-btn gh-btn-amber" disabled={!selected} onClick={onNext}>
           <Icon.LockOpen size={14} /> Decrypt this wallet
         </button>
       </div>
@@ -503,9 +519,9 @@ function StepReveal({
         </p>
       </div>
       <div className="body">
-        <div className="gh-callout err" style={{ marginBottom: 14 }}>
+        <div className="gh-callout err" style={{ marginBottom: 20 }}>
           <span className="ic">
-            <Icon.AlertTri size={16} />
+            <Icon.AlertF size={20} />
           </span>
           <div>
             <strong>Anyone with this key can control this wallet</strong>
@@ -516,19 +532,15 @@ function StepReveal({
 
         <div className="gh-key-meta">
           <span>
-            {networkLabel(account.addressFormat)} · {account.address}
+            {networkLabel(account.addressFormat)} · {maskAddress(account.address)}
           </span>
           <span style={{ flex: 1 }} />
-          <button className="gh-btn" onClick={() => setRevealed((r) => !r)}>
-            {revealed ? (
-              <>
-                <Icon.EyeOff size={14} /> Hide
-              </>
-            ) : (
-              <>
-                <Icon.Eye size={14} /> Reveal
-              </>
-            )}
+          <button
+            className="gh-key-eye"
+            onClick={() => setRevealed((r) => !r)}
+            aria-label={revealed ? 'Hide private key' : 'Show private key'}
+          >
+            {revealed ? <Icon.HideL size={18} /> : <Icon.ShowL size={18} />}
           </button>
         </div>
 
@@ -537,7 +549,7 @@ function StepReveal({
           {!revealed && (
             <div className="reveal-overlay" onClick={() => setRevealed(true)}>
               <span className="pill">
-                <Icon.Eye size={14} /> Click to reveal private key
+                <Icon.ShowL size={16} /> Click to reveal private key
               </span>
             </div>
           )}
@@ -566,9 +578,9 @@ function StepReveal({
           </ol>
         </div>
 
-        <div className="gh-callout warn" style={{ marginTop: 18 }}>
+        <div className="gh-callout warn" style={{ marginTop: 20 }}>
           <span className="ic">
-            <Icon.AlertTri size={16} />
+            <Icon.AlertF size={20} />
           </span>
           <div>
             <strong>Each wallet must be recovered separately</strong>
@@ -578,11 +590,11 @@ function StepReveal({
         </div>
       </div>
       <div className="foot">
-        <button className="gh-btn gh-btn-ghost" onClick={onBack}>
+        <span style={{ flex: 1 }} />
+        <button className="gh-btn" onClick={onBack}>
           ← Recover another wallet
         </button>
-        <span style={{ flex: 1 }} />
-        <button className="gh-btn gh-btn-danger" onClick={() => window.location.reload()}>
+        <button className="gh-btn gh-btn-amber" onClick={() => window.location.reload()}>
           <Icon.Trash size={14} /> End session & wipe
         </button>
       </div>
@@ -613,6 +625,12 @@ function downloadKey(account: WalletAccount, privateKey: string) {
   a.download = `exit-${account.address.slice(0, 10)}.json`
   a.click()
   URL.revokeObjectURL(url)
+}
+
+/** Mask an address to its first 6 and last 4 characters: 0x71C7…976F. */
+function maskAddress(addr: string): string {
+  if (addr.length <= 12) return addr
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`
 }
 
 function errMsg(err: unknown): string {

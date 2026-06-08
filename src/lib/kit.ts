@@ -3,6 +3,8 @@
 // owner's recovery P-256 keypair (and, for a sole owner, a second "recovery user" key)
 // plus the Turnkey sub-organization id — everything needed to talk to Turnkey directly.
 
+import { IS_MOCK, mockId } from './mock'
+
 export const RECOVERY_KIT_STRING_PREFIX = 'reah_rk_'
 
 export type RecoveryKit = {
@@ -31,6 +33,19 @@ function base64UrlToBytes(value: string): Uint8Array {
 
 export function decodeRecoveryKit(value: string): RecoveryKit {
   const trimmed = value.trim()
+  if (IS_MOCK) {
+    // Any non-empty string becomes a deterministic fake kit (distinct input → distinct
+    // owner), so the flow can be exercised without a real Recovery Kit.
+    const id = mockId(trimmed)
+    return {
+      version: 1,
+      entity_id: 'mock-entity',
+      turnkey_suborg_id: 'mock-suborg',
+      user_id: `mock-user-${id}`,
+      public_key: `mockpub_${id}`,
+      private_key: `mockpriv_${id}`,
+    }
+  }
   if (!trimmed.startsWith(RECOVERY_KIT_STRING_PREFIX)) {
     throw new Error('Not a Reah Recovery Kit string (missing reah_rk_ prefix).')
   }

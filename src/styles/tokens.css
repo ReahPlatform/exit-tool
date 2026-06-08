@@ -29,6 +29,7 @@
   --color-border-strong:     #CDCED6;
   --color-divider-light:     #F1F2F3;
   --color-border-light1:     rgb(0 0 0 / 10%);
+  --color-border-light2:     rgb(0 0 0 / 20%);
 
   /* ---- Ink (info) ---- */
   --color-info:          #000000;
@@ -46,10 +47,13 @@
 
   /* ---- Status ---- */
   --color-success:  #0FBF49;
+  --color-success2: #3CAE8C;
   --color-success3: #EBF8F0;
   --color-error:    #ED4A4A;
+  --color-error2:   #DE736A;
   --color-error3:   #FFEAE8;
   --color-warning:  #F98906;
+  --color-warning2: #D98D4A;
   --color-warning3: #FFEFDB;
 
   /* ---- Type ---- */
