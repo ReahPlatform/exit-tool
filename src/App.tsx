@@ -257,9 +257,7 @@ function StepKeys({ onChange, onNext }: { onChange: (k: RecoveryKit[]) => void; 
       <div className="head">
         <h1>Enter Owner Recovery Kits</h1>
         <p>
-          Paste a Recovery Kit string. The tool verifies it against Turnkey's live signing quorum — a{' '}
-          <b>sole owner whose kit meets the quorum needs only one</b>; otherwise add a second owner kit to meet the
-          quorum (at most two).
+          A single-owner entity requires one Recovery Kit. Multi-owner entities require at least two Recovery Kits.
         </p>
       </div>
       <div className="body">

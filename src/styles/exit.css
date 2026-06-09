@@ -71,9 +71,14 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+/* Primary (amber) disabled = Reah's grey treatment: grey3 fill, info-n3 text — not a
+   faded-yellow. */
+.gh-btn-amber:disabled,
 .gh-btn-amber:disabled:hover {
-  background: var(--color-theme-yellow);
-  border-color: var(--color-theme-yellow);
+  opacity: 1;
+  background: var(--color-background-grey3);
+  border-color: var(--color-background-grey3);
+  color: var(--color-info-n3);
 }
 .gh-btn-danger:disabled:hover {
   background: #da3633;
