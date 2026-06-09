@@ -1,0 +1,35 @@
+{
+  "name": "exit-tool",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Reah Exit Tool — a standalone, offline-first break-glass recovery UI that exports wallet private keys directly from Turnkey using Recovery Kits. No backend; talks only to api.turnkey.com.",
+  "license": "MIT",
+  "packageManager": "pnpm@10.3.0",
+  "scripts": {
+    "dev": "vite",
+    "dev:mock": "vite --mode mock",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check-types": "tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@turnkey/api-key-stamper": "^0.4.0",
+    "@turnkey/crypto": "^2.3.0",
+    "@turnkey/http": "^3.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "~5.9.3",
+    "vite": "^8.0.8",
+    "vite-plugin-singlefile": "^2.3.0",
+    "vitest": "^4.1.8"
+  }
+}

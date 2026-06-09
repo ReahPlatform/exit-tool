@@ -1,0 +1,101 @@
+/* Exit-tool-specific additions (the recovery-kit paste fields) — styled to match the
+   mock's tokens so they sit naturally next to the ported .gh-* look. */
+
+.exit-kit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.exit-kit-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-info-n10);
+}
+
+.exit-kit-optional {
+  font-weight: 400;
+  color: var(--color-info-n5);
+}
+
+.exit-kit-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 136px;
+  resize: vertical;
+  padding: 12px 14px;
+  border-radius: var(--radius-8, 8px);
+  border: 1px solid var(--color-border-light1);
+  background: var(--color-background-white, #fff);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-info-n10);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.exit-kit-input::placeholder {
+  color: var(--color-info-n3);
+}
+.exit-kit-input:focus {
+  border-color: var(--color-border-light1);
+  box-shadow: none;
+}
+.exit-kit-input.is-valid {
+  border-color: var(--color-border-light1);
+}
+.exit-kit-input.is-invalid {
+  border-color: var(--color-border-light1);
+}
+
+.exit-kit-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: -8px;
+  font-size: 12px;
+  color: var(--color-info-n5);
+}
+.exit-kit-note.ok {
+  color: var(--color-success, #1aab6b);
+}
+.exit-kit-note.err {
+  color: var(--color-error, #ed4a4a);
+}
+
+/* A disabled button must clearly read as non-interactive: fade it, show a not-allowed
+   cursor, and suppress the colored hover shift so it never looks clickable. */
+.gh-btn:disabled,
+.gh-btn:disabled:hover {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+/* Primary (amber) disabled = Reah's grey treatment: grey3 fill, info-n3 text — not a
+   faded-yellow. */
+.gh-btn-amber:disabled,
+.gh-btn-amber:disabled:hover {
+  opacity: 1;
+  background: var(--color-background-grey3);
+  border-color: var(--color-background-grey3);
+  color: var(--color-info-n3);
+}
+.gh-btn-danger:disabled:hover {
+  background: #da3633;
+  border-color: #da3633;
+}
+
+/* Colored buttons keep their own color (slightly shifted) on hover instead of falling
+   through to the generic grey .gh-btn:hover. */
+.gh-btn-danger:hover {
+  background: #d83c3c;
+  border-color: #d83c3c;
+}
+.gh-btn-amber:hover {
+  background: #ffcf7a;
+  border-color: #ffcf7a;
+}
+.gh-btn-ghost:hover {
+  background: var(--color-background-grey3);
+  color: var(--color-info-n10);
+}

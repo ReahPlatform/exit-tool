@@ -1,0 +1,13 @@
+/* Design tokens + the dashboard visual language, ported from the Reah mock and trimmed
+   to the gh-/rk- prefixed rules this tool actually renders. exit.css adds tool tweaks. */
+@import './tokens.css';
+@import './app.css';
+@import './exit.css';
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: var(--color-background-grey4, #f4f5f7);
+}
