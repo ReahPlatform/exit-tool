@@ -29,7 +29,6 @@
   --color-border-strong:     #CDCED6;
   --color-divider-light:     #F1F2F3;
   --color-border-light1:     rgb(0 0 0 / 10%);
-  --color-border-light2:     rgb(0 0 0 / 20%);
 
   /* ---- Ink (info) ---- */
   --color-info:          #000000;
@@ -55,6 +54,14 @@
   --color-warning:  #F98906;
   --color-warning2: #D98D4A;
   --color-warning3: #FFEFDB;
+
+  /* ---- Sidebar stepper (mirrors @reah/ui SidebarStepper) ---- */
+  --color-stepper-line:         #E9EBF0;
+  --color-stepper-todo-bg:      #F4F6F9;
+  --color-stepper-todo-fg:      #C8CDD7;
+  --color-stepper-done-fg:      #10B981;
+  --color-stepper-done-label:   #B3B8C2;
+  --color-stepper-current-label:#111827;
 
   /* ---- Type ---- */
   --font-sans: "SF Pro", "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Inter", "Noto Sans SC", "Helvetica Neue", system-ui, "Segoe UI", sans-serif;

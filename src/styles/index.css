@@ -1,8 +1,7 @@
-/* Design tokens + look ported verbatim from the preview-9 mock so the standalone
-   tool keeps the dashboard visual language. mock.css carries every scene's classes;
-   the exit tool only uses the .gh-* (and a few shared) rules. */
+/* Design tokens + the dashboard visual language, ported from the Reah mock and trimmed
+   to the gh-/rk- prefixed rules this tool actually renders. exit.css adds tool tweaks. */
 @import './tokens.css';
-@import './mock.css';
+@import './app.css';
 @import './exit.css';
 
 html,

@@ -1,6 +1,6 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
+import { defineConfig } from 'vitest/config'
 
 // The build emits a single self-contained index.html (all JS/CSS inlined) so it can be
 // hosted statically at a root path OR downloaded and opened offline — important for a
@@ -12,5 +12,11 @@ export default defineConfig({
     outDir: 'dist',
     assetsInlineLimit: 100_000_000,
     cssCodeSplit: false,
+  },
+  // Unit tests for the core lib (decoding, coverage math, mock contract). Node env: the
+  // lib is pure data/crypto with no DOM, and a node env keeps IS_MOCK off by default.
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
   },
 })

@@ -46,8 +46,8 @@ you export. Nothing is sent to Reah.
 If you'd rather build the single-file copy yourself instead of downloading the release:
 
 ```sh
-npm install
-npm run build     # produces dist/index.html — the same single self-contained file
+pnpm install
+pnpm run build     # produces dist/index.html — the same single self-contained file
 ```
 
 `dist/index.html` is byte-for-byte the artifact attached to each release. Open it the same
@@ -56,7 +56,9 @@ way as above.
 To run it as a live dev server while hacking on the code:
 
 ```sh
-npm run dev       # http://localhost:5173
+pnpm run dev       # http://localhost:5173
+pnpm run dev:mock  # same, but with deterministic fake data — no real Recovery Kit needed
+pnpm test          # unit tests for the core lib (src/lib)
 ```
 
 ## Security

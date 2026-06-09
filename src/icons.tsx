@@ -21,7 +21,6 @@ function svg(size: number, children: React.ReactNode) {
 }
 
 export const Icon = {
-  Shield: ({ size = 16 }: IconProps) => svg(size, <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" />),
   ShieldCheck: ({ size = 16 }: IconProps) => (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <path
@@ -77,30 +76,6 @@ export const Icon = {
       />
     </svg>
   ),
-  CheckCircle: ({ size = 16 }: IconProps) =>
-    svg(
-      size,
-      <>
-        <path d="M22 11.1V12a10 10 0 11-5.9-9.1" />
-        <path d="M22 4L12 14.01l-3-3" />
-      </>,
-    ),
-  KeyRound: ({ size = 14 }: IconProps) =>
-    svg(
-      size,
-      <>
-        <circle cx="8" cy="15" r="4" />
-        <path d="M10.8 12.2L19 4l2 2-1.5 1.5L21 9l-2 2-1.5-1.5L15 12" />
-      </>,
-    ),
-  ArrowRight: ({ size = 14 }: IconProps) =>
-    svg(
-      size,
-      <>
-        <line x1="5" y1="12" x2="19" y2="12" />
-        <polyline points="12 5 19 12 12 19" />
-      </>,
-    ),
   WalletL: ({ size = 20 }: IconProps) => (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
       <path
@@ -109,39 +84,12 @@ export const Icon = {
       />
     </svg>
   ),
-  Wallet: ({ size = 16 }: IconProps) =>
-    svg(
-      size,
-      <>
-        <path d="M21 12V7H5a2 2 0 010-4h14v4" />
-        <path d="M3 5v14a2 2 0 002 2h16v-5" />
-        <path d="M18 12a2 2 0 000 4h3v-4z" />
-      </>,
-    ),
-  ChevRight: ({ size = 16 }: IconProps) => svg(size, <polyline points="9 18 15 12 9 6" />),
-  AlertTri: ({ size = 16 }: IconProps) =>
-    svg(
-      size,
-      <>
-        <path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" />
-        <line x1="12" y1="9" x2="12" y2="13" />
-        <line x1="12" y1="17" x2="12" y2="17" />
-      </>,
-    ),
   LockOpen: ({ size = 14 }: IconProps) =>
     svg(
       size,
       <>
         <rect x="3" y="11" width="18" height="11" rx="2" />
         <path d="M7 11V7a5 5 0 019.9-1" />
-      </>,
-    ),
-  Terminal: ({ size = 16 }: IconProps) =>
-    svg(
-      size,
-      <>
-        <polyline points="4 17 10 11 4 5" />
-        <line x1="12" y1="19" x2="20" y2="19" />
       </>,
     ),
   ShowL: ({ size = 20 }: IconProps) => (
@@ -164,22 +112,6 @@ export const Icon = {
       />
     </svg>
   ),
-  Eye: ({ size = 14 }: IconProps) =>
-    svg(
-      size,
-      <>
-        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
-        <circle cx="12" cy="12" r="3" />
-      </>,
-    ),
-  EyeOff: ({ size = 14 }: IconProps) =>
-    svg(
-      size,
-      <>
-        <path d="M9.9 4.2A11 11 0 0112 4c7 0 11 7 11 7a18 18 0 01-2.2 3.2M6.6 6.6A18 18 0 001 11s4 7 11 7a11 11 0 005.4-1.4" />
-        <path d="M1 1l22 22" />
-      </>,
-    ),
   Copy: ({ size = 14 }: IconProps) =>
     svg(
       size,
