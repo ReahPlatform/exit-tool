@@ -1,0 +1,679 @@
+/* Exit Tool stylesheet — the gh-/rk- prefixed visual language for the standalone tool.
+   Ported from the Reah dashboard mock, trimmed to only the rules this tool renders.
+   Tokens live in tokens.css; tool-specific overrides in exit.css. */
+
+.pill {
+  min-height: 22px;
+  padding: 1px 8px;
+  border-radius: var(--radius-4);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.gh-shell {
+  min-height: 100vh;
+  background: var(--color-background-white);
+  color: var(--color-info-n10);
+  font-family: var(--font-sans);
+  display: flex;
+  flex-direction: column;
+}
+
+.gh-topbar {
+  min-height: 64px;
+  background: var(--color-background-white);
+  border-bottom: 1px solid var(--color-divider-light);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 36px;
+}
+
+.gh-topbar .brand-logo {
+  display: block;
+  height: 18px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.gh-topbar .brand-divider {
+  width: 1px;
+  height: 28px;
+  flex-shrink: 0;
+  background: var(--color-divider-light);
+}
+
+.gh-topbar .title {
+  color: var(--color-info-n10);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.gh-topbar .repo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 4px;
+  padding: 3px 8px;
+  border: none;
+  border-radius: var(--radius-6);
+  background: var(--color-background-grey2);
+  color: var(--color-info-n5);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.gh-topbar .status {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+  color: var(--color-success2);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.gh-topbar .status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-4);
+  background: var(--color-success2);
+}
+
+.gh-topbar .topright {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gh-main {
+  flex: 1;
+  display: flex;
+  width: min(1000px, 100%);
+  margin: 0 auto;
+  padding: 36px;
+  gap: 28px;
+}
+
+.gh-side {
+  width: 240px;
+  flex-shrink: 0;
+}
+
+.gh-session-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 16px;
+  border-radius: var(--radius-16);
+  border: 1px solid var(--color-border-light1);
+  background: var(--color-background-grey2);
+  box-shadow: none;
+}
+
+.gh-session-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gh-session-icon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-divider-light);
+  border-radius: var(--radius-8);
+  background: var(--color-background-grey3);
+  color: var(--color-info-n10);
+}
+
+.gh-session-title {
+  color: var(--color-info-n10);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.gh-session-sub, .gh-session-copy {
+  color: var(--color-info-n5);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.gh-side .step-group {
+  margin: 16px 0 6px;
+  color: var(--color-info-n3);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 20px;
+  text-transform: none;
+}
+
+/* Sidebar Stepper — mirrors @reah/ui SidebarStepper (badge + label + connector). */
+
+.gh-side .rk-stepper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.gh-side .rk-step {
+  position: relative;
+}
+
+.gh-side .rk-step-line {
+  position: absolute;
+  left: 15.5px;
+  top: 32px;
+  bottom: -18px;
+  width: 1px;
+  background: #E9EBF0;
+}
+
+.gh-side .rk-step-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+}
+
+.gh-side .rk-step-row.is-clickable {
+  cursor: pointer;
+}
+
+.gh-side .rk-badge {
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  border: 4px solid var(--color-background-white);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.gh-side .rk-badge.is-current {
+  background: #000000;
+  color: #FFFFFF;
+}
+
+.gh-side .rk-badge.is-todo {
+  background: #F4F6F9;
+  color: #C8CDD7;
+}
+
+.gh-side .rk-badge.is-done {
+  background: var(--color-success3);
+  color: #10B981;
+}
+
+.gh-side .rk-step-label {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18px;
+}
+
+.gh-side .rk-step-label.is-current {
+  color: #111827;
+}
+
+.gh-side .rk-step-label.is-done {
+  color: #B3B8C2;
+}
+
+.gh-side .rk-step-label.is-todo {
+  color: #C8CDD7;
+}
+
+.gh-side .rk-step-row.is-clickable:hover .rk-step-label {
+  color: #111827;
+}
+
+.gh-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.gh-card {
+  overflow: hidden;
+  border: 1px solid var(--color-border-light1);
+  border-radius: var(--radius-16);
+  background: var(--color-background-white);
+  box-shadow: none;
+}
+
+.gh-card .head {
+  position: relative;
+  padding: 20px;
+  border-bottom: none;
+}
+
+.gh-card .head::after {
+  content: '';
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 0;
+  height: 1px;
+  background: var(--color-divider-light);
+}
+
+.gh-card .head h1 {
+  margin: 0;
+  color: var(--color-info-n10);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 28px;
+  letter-spacing: 0;
+}
+
+.gh-card .head p {
+  max-width: 680px;
+  margin: 4px 0 0;
+  color: var(--color-info-n5);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.gh-card .head p b {
+  font-weight: 500;
+}
+
+.gh-card .body {
+  padding: 20px;
+}
+
+.gh-card .foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px 16px;
+  border-top: none;
+}
+
+.gh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--color-border-light1);
+  border-radius: var(--radius-6);
+  background: transparent;
+  color: var(--color-info-n10);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.gh-btn:hover {
+  background: var(--color-background-grey2);
+}
+
+.gh-btn-amber {
+  border-color: var(--color-theme-yellow);
+  background: var(--color-theme-yellow);
+  color: var(--color-info-n10);
+}
+
+.gh-btn-amber:hover {
+  background: color-mix(in srgb, var(--color-theme-yellow) 80%, #ffffff);
+  border-color: color-mix(in srgb, var(--color-theme-yellow) 80%, #ffffff);
+}
+
+.gh-btn-ghost {
+  border-color: transparent;
+  color: var(--color-info-n5);
+}
+
+.gh-btn-ghost:hover {
+  background: var(--color-background-grey2);
+  color: var(--color-info-n10);
+}
+
+.gh-btn-danger {
+  border-color: var(--color-error);
+  background: var(--color-error);
+  color: var(--color-background-white);
+}
+
+.gh-owner-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-divider-light);
+  border-radius: var(--radius-8);
+  background: var(--color-background-grey4);
+  color: var(--color-info-n10);
+  text-align: left;
+}
+
+.gh-owner-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.gh-owner-row .n {
+  color: var(--color-info-n10);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.gh-owner-row .r {
+  margin-top: 2px;
+  color: var(--color-info-n5);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.gh-wallet-group + .gh-wallet-group {
+  margin-top: 14px;
+}
+
+.gh-wallet-group-head {
+  margin-bottom: 8px;
+  color: var(--color-info-n5);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.gh-wallet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gh-wallet-row {
+  cursor: pointer;
+  background: transparent;
+  border-color: var(--color-border-light1);
+  border-radius: var(--radius-12);
+}
+
+.gh-wallet-row.is-selected {
+  background: transparent;
+  border-color: var(--color-border-light1);
+  box-shadow: none;
+}
+
+.gh-wallet-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-8);
+  background: var(--color-background-grey3);
+  color: var(--color-info-n10);
+  flex-shrink: 0;
+}
+
+.gh-wallet-check {
+  margin-left: 8px;
+  color: var(--color-info-n1);
+}
+
+.gh-wallet-row.is-selected .gh-wallet-check {
+  color: var(--color-theme-yellow);
+}
+
+/* AlertTips — mirrors @reah/ui AlertTips (soft container + icon-led title + indented desc). */
+
+.gh-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: var(--radius-8);
+  background: var(--color-background-grey3);
+  color: var(--color-info-n5);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.gh-callout .ic {
+  flex-shrink: 0;
+  color: var(--color-info-n5);
+}
+
+.gh-callout .ic > svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.gh-callout strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--color-info-n5);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.gh-callout.warn {
+  background: var(--color-warning3);
+}
+
+.gh-callout.warn .ic, .gh-callout.warn strong {
+  color: var(--color-warning2);
+}
+
+.gh-callout.err {
+  background: var(--color-error3);
+}
+
+.gh-callout.err .ic, .gh-callout.err strong {
+  color: var(--color-error2);
+}
+
+.gh-callout.ok {
+  background: var(--color-success3);
+}
+
+.gh-callout.ok .ic, .gh-callout.ok strong {
+  color: var(--color-success2);
+}
+
+.gh-log {
+  max-height: 220px;
+  overflow: auto;
+  padding: 14px 16px;
+  border: 1px solid var(--color-divider-light);
+  border-radius: var(--radius-8);
+  background: var(--color-background-grey4);
+  color: var(--color-info-n5);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.gh-log .ok {
+  color: var(--color-success);
+}
+
+.gh-log .info {
+  color: var(--color-theme-blue2);
+}
+
+.gh-log .warn {
+  color: var(--color-warning);
+}
+
+.gh-log .err {
+  color: var(--color-error);
+}
+
+.gh-danger-title {
+  color: var(--color-error) !important;
+}
+
+.gh-key-meta, .gh-action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gh-key-meta {
+  margin-bottom: 8px;
+}
+
+.gh-key-meta span {
+  color: var(--color-info-n5);
+  font-size: 12px;
+  letter-spacing: 0;
+  line-height: 20px;
+  text-transform: none;
+}
+
+.gh-key-eye {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-info-n5);
+  cursor: pointer;
+}
+
+.gh-key-eye:hover {
+  color: var(--color-info-n10);
+}
+
+.gh-key-block {
+  position: relative;
+  box-sizing: border-box;
+  height: 72px;
+  overflow-y: auto;
+  padding: 18px 20px;
+  border: 1px solid var(--color-border-light1);
+  border-radius: var(--radius-8);
+  background: var(--color-background-grey4);
+  color: var(--color-info-n10);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0;
+  line-height: 22px;
+  word-break: break-all;
+}
+
+.gh-key-block .blur {
+  filter: blur(6px);
+  user-select: none;
+}
+
+.gh-key-block .reveal-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-8);
+  background: color-mix(in srgb, var(--color-background-white) 88%, transparent);
+  cursor: pointer;
+}
+
+.gh-key-block .reveal-overlay .pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--color-border-light1);
+  background: var(--color-background-white);
+  color: var(--color-info-n10);
+  font-family: var(--font-sans);
+}
+
+.gh-action-row {
+  margin-top: 12px;
+}
+
+.gh-action-row .gh-btn {
+  flex: 1;
+}
+
+.gh-next-block {
+  margin-top: 28px;
+}
+
+.gh-next-title {
+  margin-bottom: 16px;
+  color: var(--color-info-n10);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.gh-next-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gh-next-line {
+  display: flex;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-divider-light);
+  border-radius: var(--radius-8);
+  background: var(--color-background-grey4);
+  color: var(--color-info-n10);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.gh-next-num {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-12);
+  background: var(--color-background-grey3);
+  color: var(--color-info-n10);
+  font-size: 11px;
+  font-weight: 400;
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .gh-main {
+    flex-direction: column;
+    padding: 24px 20px;
+  }
+  .gh-side {
+    width: 100%;
+  }
+  .gh-topbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 14px 20px;
+  }
+}
