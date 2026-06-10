@@ -193,6 +193,22 @@ export async function listWalletAccounts(kit: RecoveryKit): Promise<WalletAccoun
         addressFormat: 'ADDRESS_FORMAT_SOLANA',
         curve: 'CURVE_ED25519',
       },
+      {
+        walletId: 'mock-wallet-banking',
+        walletName: `${kit.turnkey_suborg_id}-banking-settlement-wallet`,
+        accountId: 'mock-acct-banking',
+        address: '0x3aA1B0C9d8E7f6A5b4C3d2E1f0A9b8C7d6E5f4A3',
+        addressFormat: 'ADDRESS_FORMAT_ETHEREUM',
+        curve: 'CURVE_SECP256K1',
+      },
+      {
+        walletId: 'mock-wallet-treasury',
+        walletName: `${kit.turnkey_suborg_id}-treasury-wallet-1717000000`,
+        accountId: 'mock-acct-treasury',
+        address: '0x9A3f1B2c4D5e6F7081B2c3D4e5F6a7B8c9D0e1F2',
+        addressFormat: 'ADDRESS_FORMAT_ETHEREUM',
+        curve: 'CURVE_SECP256K1',
+      },
     ]
   }
   const client = clientForKit(kit)
@@ -227,6 +243,27 @@ export function networkLabel(addressFormat: string): string {
   if (addressFormat.includes('TRON')) return 'Tron'
   if (addressFormat.includes('BITCOIN')) return 'Bitcoin'
   return addressFormat.replace('ADDRESS_FORMAT_', '').replace(/_/g, ' ')
+}
+
+export type WalletGroup = 'user' | 'banking' | 'treasury'
+
+/**
+ * Classifies a Turnkey wallet by its name into one of three display groups:
+ *
+ * - `banking` / `treasury` — created by the Reah backend with deterministic names:
+ *     `<entityId>-banking-settlement-wallet` (or `…-banking_settlement-wallet`)
+ *     `<entityId>-treasury-wallet-<unixSeconds>`
+ * - `user` — everything else (wallets the user created, with arbitrary names).
+ *
+ * Matching is on the distinctive name suffix, so a user-named wallet (e.g. "Treasury")
+ * is not misclassified — the backend names always carry the `-settlement-wallet` /
+ * `-wallet-<digits>` tail.
+ */
+export function classifyWalletGroup(walletName: string): WalletGroup {
+  const name = (walletName ?? '').trim().toLowerCase()
+  if (/banking[_-]settlement-wallet$/.test(name)) return 'banking'
+  if (/-treasury-wallet-\d+$/.test(name)) return 'treasury'
+  return 'user'
 }
 
 /**

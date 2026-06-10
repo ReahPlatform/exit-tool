@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { RecoveryKit } from './kit'
-import { networkLabel } from './turnkey'
+import { classifyWalletGroup, networkLabel } from './turnkey'
 
 const KIT: RecoveryKit = {
   version: 1,
@@ -23,6 +23,33 @@ describe('networkLabel', () => {
 
   it('falls back to a de-prefixed, space-separated label for unknown formats', () => {
     expect(networkLabel('ADDRESS_FORMAT_APTOS_ED25519')).toBe('APTOS ED25519')
+  })
+})
+
+describe('classifyWalletGroup', () => {
+  const entity = '8f3a1b2c-0000-4d5e-9f10-abcdef012345'
+
+  it('classifies backend banking settlement wallets', () => {
+    expect(classifyWalletGroup(`${entity}-banking-settlement-wallet`)).toBe('banking')
+    // backend variant uses an underscore in the suffix
+    expect(classifyWalletGroup(`${entity}-banking_settlement-wallet`)).toBe('banking')
+  })
+
+  it('classifies backend treasury wallets (name ends with -treasury-wallet-<unix>)', () => {
+    expect(classifyWalletGroup(`${entity}-treasury-wallet-1717000000`)).toBe('treasury')
+  })
+
+  it('treats everything else as a user wallet', () => {
+    expect(classifyWalletGroup('Wallet1')).toBe('user')
+    expect(classifyWalletGroup('Wallet1-1717000000')).toBe('user')
+    expect(classifyWalletGroup('Safe{Wallet} My Multisig')).toBe('user')
+    expect(classifyWalletGroup('My Treasury')).toBe('user')
+    expect(classifyWalletGroup('banking')).toBe('user')
+    expect(classifyWalletGroup('')).toBe('user')
+  })
+
+  it('is case-insensitive and trims surrounding whitespace', () => {
+    expect(classifyWalletGroup(`  ${entity.toUpperCase()}-BANKING-SETTLEMENT-WALLET  `)).toBe('banking')
   })
 })
 
@@ -55,10 +82,21 @@ describe('Turnkey lib in mock mode', () => {
     expect(cov.quorumUserIds).toHaveLength(2)
   })
 
-  it('listWalletAccounts returns one EVM and one Solana account', async () => {
-    const { listWalletAccounts } = await import('./turnkey')
+  it('listWalletAccounts returns user, banking, and treasury accounts', async () => {
+    const { listWalletAccounts, classifyWalletGroup } = await import('./turnkey')
     const accounts = await listWalletAccounts(KIT)
-    expect(accounts.map((a) => a.addressFormat)).toEqual(['ADDRESS_FORMAT_ETHEREUM', 'ADDRESS_FORMAT_SOLANA'])
+    expect(accounts.map((a) => a.addressFormat)).toEqual([
+      'ADDRESS_FORMAT_ETHEREUM',
+      'ADDRESS_FORMAT_SOLANA',
+      'ADDRESS_FORMAT_ETHEREUM',
+      'ADDRESS_FORMAT_ETHEREUM',
+    ])
+    expect(accounts.map((a) => classifyWalletGroup(a.walletName))).toEqual([
+      'user',
+      'user',
+      'banking',
+      'treasury',
+    ])
   })
 
   it('exportWalletAccountPrivateKey returns a hex key for EVM and a distinct one for Solana', async () => {

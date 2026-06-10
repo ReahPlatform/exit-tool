@@ -391,6 +391,18 @@
   line-height: 20px;
 }
 
+.gh-wallet-group + .gh-wallet-group {
+  margin-top: 14px;
+}
+
+.gh-wallet-group-head {
+  margin-bottom: 8px;
+  color: var(--color-info-n5);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
 .gh-wallet-list {
   display: flex;
   flex-direction: column;

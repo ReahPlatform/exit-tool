@@ -1,17 +1,27 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import brand from './assets/brand.png'
 import { Icon } from './icons'
 import { decodeRecoveryKit, kitFingerprint, type RecoveryKit } from './lib/kit'
 import {
   checkKitCoverage,
+  classifyWalletGroup,
   exportWalletAccountPrivateKey,
   listWalletAccounts,
   networkLabel,
   validateKit,
   type WalletAccount,
+  type WalletGroup,
   type WhoAmI,
 } from './lib/turnkey'
+
+// Display order + headers for the three wallet groups. Backend-created banking and
+// treasury wallets are detected by name (classifyWalletGroup); everything else is "user".
+const WALLET_GROUPS: { key: WalletGroup; label: string }[] = [
+  { key: 'user', label: 'User wallets' },
+  { key: 'banking', label: 'Banking' },
+  { key: 'treasury', label: 'Treasury' },
+]
 
 type StepId = 'keys' | 'wallet' | 'export' | 'reveal'
 const STEPS: Array<{ id: StepId; label: string }> = [
@@ -351,6 +361,16 @@ function StepWallet({
   const [accounts, setAccounts] = useState<WalletAccount[] | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // Group accounts by their wallet's classification, preserving Turnkey's order within
+  // each group. A wallet's accounts (EVM, Solana, …) all share the same wallet name.
+  const grouped = useMemo(() => {
+    const map: Record<WalletGroup, WalletAccount[]> = { user: [], banking: [], treasury: [] }
+    for (const account of accounts ?? []) {
+      map[classifyWalletGroup(account.walletName)].push(account)
+    }
+    return map
+  }, [accounts])
+
   useEffect(() => {
     if (!kit) return
     let cancelled = false
@@ -377,28 +397,37 @@ function StepWallet({
         {accounts === null && !error && <div className="exit-kit-note">Loading wallets from Turnkey…</div>}
         {error && <div className="gh-callout err">{error}</div>}
         {accounts && accounts.length === 0 && <div className="exit-kit-note">No wallet accounts found.</div>}
-        <div className="gh-wallet-list">
-          {(accounts ?? []).map((a) => (
-            <button
-              key={a.accountId}
-              className={`gh-owner-row gh-wallet-row ${selected?.accountId === a.accountId ? 'is-selected' : ''}`}
-              onClick={() => onSelect(a)}
-            >
-              <div className="gh-wallet-icon">
-                <Icon.WalletL size={18} />
+        {WALLET_GROUPS.map(({ key, label }) => {
+          const groupAccounts = grouped[key]
+          if (groupAccounts.length === 0) return null
+          return (
+            <div key={key} className="gh-wallet-group">
+              <div className="gh-wallet-group-head">{label}</div>
+              <div className="gh-wallet-list">
+                {groupAccounts.map((a) => (
+                  <button
+                    key={a.accountId}
+                    className={`gh-owner-row gh-wallet-row ${selected?.accountId === a.accountId ? 'is-selected' : ''}`}
+                    onClick={() => onSelect(a)}
+                  >
+                    <div className="gh-wallet-icon">
+                      <Icon.WalletL size={18} />
+                    </div>
+                    <div className="gh-owner-main">
+                      <div className="n" style={{ fontFamily: 'var(--font-mono)' }}>
+                        {a.address}
+                      </div>
+                      <div className="r">{networkLabel(a.addressFormat)}</div>
+                    </div>
+                    <div className="gh-wallet-check">
+                      <Icon.CheckF size={20} />
+                    </div>
+                  </button>
+                ))}
               </div>
-              <div className="gh-owner-main">
-                <div className="n" style={{ fontFamily: 'var(--font-mono)' }}>
-                  {a.address}
-                </div>
-                <div className="r">{networkLabel(a.addressFormat)}</div>
-              </div>
-              <div className="gh-wallet-check">
-                <Icon.CheckF size={20} />
-              </div>
-            </button>
-          ))}
-        </div>
+            </div>
+          )
+        })}
 
         <div className="gh-callout warn" style={{ marginTop: 10 }}>
           <span className="ic">
