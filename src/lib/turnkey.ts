@@ -36,7 +36,7 @@ export async function validateKit(kit: RecoveryKit): Promise<WhoAmI> {
     return {
       organizationId: kit.turnkey_suborg_id,
       organizationName: 'Mock Entity',
-      userId: kit.user_id,
+      userId: kit.user_id ?? `mock-user-${mockId(kit.public_key)}`,
       username: `owner-${mockId(kit.public_key).slice(0, 4)}`,
     }
   }
@@ -114,7 +114,7 @@ export async function checkKitCoverage(kit: RecoveryKit): Promise<KitCoverage> {
     return {
       threshold: MOCK_THRESHOLD,
       quorumUserIds: ['mock-quorum-a', 'mock-quorum-b'],
-      coveredUserIds: [kit.user_id],
+      coveredUserIds: [kit.user_id ?? kit.public_key],
       soleSufficient: false,
     }
   }
