@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import brand from './assets/brand.png'
 import { Icon } from './icons'
+import { EXPORT_CONFIRMATION_PHRASE, isExportConfirmationPhrase } from './lib/exportConfirmation'
 import { decodeRecoveryKit, kitFingerprint, type RecoveryKit } from './lib/kit'
 import {
   checkKitCoverage,
@@ -119,11 +120,11 @@ function Sidebar({ idx, onGo }: { idx: number; onGo: (s: StepId) => void }) {
           </div>
           <div>
             <div className="gh-session-title">Recovery session</div>
-            <div className="gh-session-sub">Offline · no Reah connection</div>
+            <div className="gh-session-sub">Offline-first · direct to Turnkey</div>
           </div>
         </div>
         <div className="gh-session-copy">
-          Open-source and offline-first. Every operation happens in your browser; nothing is uploaded to Reah.
+          Key material stays in your browser. Turnkey export activity may trigger Reah security notifications.
         </div>
       </div>
       <div className="step-group">Recover</div>
@@ -360,6 +361,7 @@ function StepWallet({
 }) {
   const [accounts, setAccounts] = useState<WalletAccount[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [confirmationStep, setConfirmationStep] = useState<'risk' | 'final' | null>(null)
 
   // Group accounts by their wallet's classification, preserving Turnkey's order within
   // each group. A wallet's accounts (EVM, Solana, …) all share the same wallet name.
@@ -445,11 +447,201 @@ function StepWallet({
         <button className="gh-btn" onClick={onBack}>
           ← Back
         </button>
-        <button className="gh-btn gh-btn-amber" disabled={!selected} onClick={onNext}>
+        <button
+          className="gh-btn gh-btn-amber"
+          disabled={!selected}
+          onClick={() => setConfirmationStep('risk')}
+        >
           <Icon.LockOpen size={14} /> Decrypt this wallet
         </button>
       </div>
+      {selected && confirmationStep === 'risk' ? (
+        <ExportRiskDialog
+          account={selected}
+          onCancel={() => setConfirmationStep(null)}
+          onContinue={() => setConfirmationStep('final')}
+        />
+      ) : null}
+      {selected && confirmationStep === 'final' ? (
+        <ExportFinalDialog
+          account={selected}
+          onBack={() => setConfirmationStep('risk')}
+          onCancel={() => setConfirmationStep(null)}
+          onConfirm={() => {
+            setConfirmationStep(null)
+            onNext()
+          }}
+        />
+      ) : null}
     </div>
+  )
+}
+
+function DialogShell({
+  title,
+  description,
+  children,
+  footer,
+  onCancel,
+}: {
+  title: string
+  description: string
+  children: React.ReactNode
+  footer: React.ReactNode
+  onCancel: () => void
+}) {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onCancel()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onCancel])
+
+  return (
+    <div
+      className="gh-dialog-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onCancel()
+      }}
+    >
+      <div className="gh-dialog" role="dialog" aria-modal="true" aria-labelledby="export-dialog-title">
+        <div className="gh-dialog-head">
+          <div className="gh-dialog-icon">
+            <Icon.AlertF size={20} />
+          </div>
+          <div>
+            <h2 id="export-dialog-title">{title}</h2>
+            <p>{description}</p>
+          </div>
+        </div>
+        <div className="gh-dialog-body">{children}</div>
+        <div className="gh-dialog-foot">{footer}</div>
+      </div>
+    </div>
+  )
+}
+
+function ExportRiskDialog({
+  account,
+  onCancel,
+  onContinue,
+}: {
+  account: WalletAccount
+  onCancel: () => void
+  onContinue: () => void
+}) {
+  const [acknowledged, setAcknowledged] = useState(false)
+
+  return (
+    <DialogShell
+      title="Use Emergency Exit only as a last resort"
+      description="Stop here if Reah is available or you can recover access through the normal account recovery flow."
+      onCancel={onCancel}
+      footer={
+        <>
+          <button type="button" className="gh-btn" onClick={onCancel}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="gh-btn gh-btn-amber"
+            disabled={!acknowledged}
+            onClick={onContinue}
+          >
+            Continue
+          </button>
+        </>
+      }
+    >
+      <div className="gh-dialog-account">
+        <span>{networkLabel(account.addressFormat)} wallet</span>
+        <code>{maskAddress(account.address)}</code>
+      </div>
+      <div className="gh-callout err">
+        <span className="ic">
+          <Icon.AlertF size={20} />
+        </span>
+        <div>
+          <strong>This action exports a live private key</strong>
+          Anyone with the key can move all funds in this wallet. The export cannot be revoked or undone.
+        </div>
+      </div>
+      <label className="gh-dialog-check">
+        <input
+          type="checkbox"
+          autoFocus
+          checked={acknowledged}
+          onChange={(event) => setAcknowledged(event.target.checked)}
+        />
+        <span>I understand the risk and have a new wallet ready for an immediate fund transfer.</span>
+      </label>
+    </DialogShell>
+  )
+}
+
+function ExportFinalDialog({
+  account,
+  onBack,
+  onCancel,
+  onConfirm,
+}: {
+  account: WalletAccount
+  onBack: () => void
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  const [confirmation, setConfirmation] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+  const canConfirm = isExportConfirmationPhrase(confirmation)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
+
+  return (
+    <DialogShell
+      title="Final confirmation"
+      description={`You are about to export the private key for ${maskAddress(account.address)}.`}
+      onCancel={onCancel}
+      footer={
+        <>
+          <button type="button" className="gh-btn" onClick={onBack}>
+            ← Back
+          </button>
+          <button type="button" className="gh-btn gh-btn-ghost" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="button" className="gh-btn gh-btn-danger" disabled={!canConfirm} onClick={onConfirm}>
+            Export private key
+          </button>
+        </>
+      }
+    >
+      <div className="gh-callout warn">
+        <span className="ic">
+          <Icon.AlertF size={20} />
+        </span>
+        <div>
+          <strong>All Entity Owners will be notified</strong>
+          When Turnkey completes this export, Reah will email every current Entity Owner with a security alert. The
+          email never includes the private key.
+        </div>
+      </div>
+      <label className="gh-dialog-field">
+        <span>
+          Type <b>{EXPORT_CONFIRMATION_PHRASE}</b> to confirm
+        </span>
+        <input
+          ref={inputRef}
+          value={confirmation}
+          onChange={(event) => setConfirmation(event.target.value)}
+          autoComplete="off"
+          spellCheck={false}
+          placeholder={EXPORT_CONFIRMATION_PHRASE}
+        />
+      </label>
+    </DialogShell>
   )
 }
 
@@ -467,13 +659,17 @@ function StepExport({
 }) {
   const [lines, setLines] = useState<Array<{ tone: string; text: string }>>([])
   const [failed, setFailed] = useState<string | null>(null)
+  const exportPromiseRef = useRef<Promise<string> | null>(null)
 
   useEffect(() => {
     let cancelled = false
     const log = (tone: string, text: string) => !cancelled && setLines((l) => [...l, { tone, text }])
-    log('info', '› Generating ephemeral target keypair…')
-    log('info', `› Requesting Turnkey export for ${account.address}…`)
-    exportWalletAccountPrivateKey(kits, account)
+    if (!exportPromiseRef.current) {
+      log('info', '› Generating ephemeral target keypair…')
+      log('info', `› Requesting Turnkey export for ${account.address}…`)
+      exportPromiseRef.current = exportWalletAccountPrivateKey(kits, account)
+    }
+    exportPromiseRef.current
       .then((pk) => {
         if (cancelled) return
         log('ok', '✓ Turnkey returned encrypted bundle')
