@@ -2,11 +2,13 @@
 
 A standalone, **offline-first break-glass recovery tool**. It lets the owners of a Reah
 entity export their wallets' **private keys directly from Turnkey**, using their Recovery
-Kits — with **no Reah backend involved**. If Reah is ever unavailable, you can still get
-your keys out.
+Kits — without depending on the Reah app or backend to complete the key export. If Reah
+is ever unavailable, you can still get your keys out.
 
-Everything runs in your browser. The only network calls are to `api.turnkey.com`; nothing
-is sent to Reah.
+Everything needed for the export runs in your browser, and the tool's only network calls
+are to `api.turnkey.com`. Turnkey export activity is monitored separately through a
+server-side webhook so Reah can email current Entity Owners when a private-key export
+completes. The Recovery Kit and private key are never sent to Reah.
 
 ## How it works
 
@@ -34,9 +36,9 @@ You don't need to install anything or build it yourself.
 
 3. Open `exit-tool.html` in your browser (double-click it, or `File → Open`).
 
-That's it. The page runs entirely from that one file — you can disconnect from the
-network first if you like; the only requests it ever makes are to `api.turnkey.com` while
-you export. Nothing is sent to Reah.
+That's it. The page runs entirely from that one file; the only requests it makes are to
+`api.turnkey.com` while you export. Reah's separate Turnkey webhook receives export
+security metadata for Owner notifications, never your Recovery Kit or private key.
 
 > Prefer to trust your own copy? Verify the file's checksum against the release, or
 > build it from source (below) and compare — the build is deterministic.
@@ -64,7 +66,9 @@ pnpm test          # unit tests for the core lib (src/lib)
 ## Security
 
 - Exports and decrypts **live wallet private keys** entirely client-side.
-- No telemetry, no analytics, no third-party script CDNs — only Turnkey.
+- No telemetry, no analytics, no third-party script CDNs — the tool talks only to Turnkey.
+- Reah's server-side Turnkey activity webhook may send an Owner security notification;
+  it never receives key material.
 - Open-source: verify the code, build it yourself, and (ideally) run the local/offline
   copy rather than a hosted one.
 

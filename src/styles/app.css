@@ -358,6 +358,150 @@
   color: var(--color-background-white);
 }
 
+.gh-btn-danger:hover {
+  background: var(--color-error2);
+}
+
+.gh-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.gh-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--color-info-n10) 40%, transparent);
+}
+
+.gh-dialog {
+  width: min(520px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--color-border-light1);
+  border-radius: var(--radius-16);
+  background: var(--color-background-white);
+}
+
+.gh-dialog-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px;
+  border-bottom: 1px solid var(--color-divider-light);
+}
+
+.gh-dialog-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-8);
+  background: var(--color-error3);
+  color: var(--color-error2);
+}
+
+.gh-dialog-head h2 {
+  margin: 0;
+  color: var(--color-info-n10);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 28px;
+}
+
+.gh-dialog-head p {
+  margin: 4px 0 0;
+  color: var(--color-info-n5);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.gh-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.gh-dialog-account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border-light1);
+  border-radius: var(--radius-8);
+  background: var(--color-background-grey4);
+  color: var(--color-info-n5);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.gh-dialog-account code {
+  color: var(--color-info-n10);
+  font-family: var(--font-mono);
+}
+
+.gh-dialog-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--color-info-n7);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.gh-dialog-check input {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin: 2px 0 0;
+  accent-color: var(--color-theme-yellow);
+}
+
+.gh-dialog-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--color-info-n7);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.gh-dialog-field b {
+  color: var(--color-info-n10);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+.gh-dialog-field input {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-light1);
+  border-radius: var(--radius-8);
+  outline: none;
+  background: var(--color-background-white);
+  color: var(--color-info-n10);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.gh-dialog-field input:focus {
+  border-color: var(--color-theme-yellow);
+}
+
+.gh-dialog-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 0 20px 20px;
+}
+
 .gh-owner-row {
   display: flex;
   align-items: center;
@@ -675,5 +819,9 @@
     flex-wrap: wrap;
     height: auto;
     padding: 14px 20px;
+  }
+
+  .gh-dialog-foot {
+    flex-wrap: wrap;
   }
 }
